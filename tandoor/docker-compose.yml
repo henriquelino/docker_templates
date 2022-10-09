@@ -1,0 +1,46 @@
+##ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+
+version: "3"
+
+volumes:
+  nginx_config:
+  staticfiles:
+
+services:
+  db:
+    image: postgres:11-alpine
+    restart: unless-stopped
+    env_file:
+      - stack.env
+    volumes:
+      - ${HDD}/files/docker/tandoor/postgresql:/var/lib/postgresql/data
+
+  # --------------------------------------------------
+  web_recipes:
+    image: vabene1111/recipes
+    restart: unless-stopped
+    env_file:
+      - stack.env
+    volumes:
+      - staticfiles:/opt/recipes/staticfiles
+      - nginx_config:/opt/recipes/nginx/conf.d
+      - ${HDD}/files/docker/tandoor/mediafiles:/opt/recipes/mediafiles
+    depends_on:
+      - db
+
+  # --------------------------------------------------
+  web:
+    image: nginx:mainline-alpine
+    restart: unless-stopped
+    env_file:
+      - stack.env
+    volumes:
+      - nginx_config:/etc/nginx/conf.d:ro
+      - staticfiles:/static:ro
+      - ${HDD}/files/docker/tandoor/mediafiles:/media:ro
+    depends_on:
+      - web_recipes
+    ports:
+      - 51600:80
