@@ -1,0 +1,35 @@
+##ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+#DAILYNOTES_API_SECRET=00112233445566778899aabbccddeeff
+#DAILYNOTES_ENCRYPT=0011223344556677 # multiple of 16 to work
+
+
+version: "3"
+services:
+
+  trilium:
+    image: zadam/trilium
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/trilium/data:/home/node/trilium-data
+    ports:
+      - 52100:8080
+      
+  # --------------------------------------------------
+  trilium-root:
+    image: zadam/trilium
+    restart: unless-stopped
+    ports:
+      - 52101:8080
+      
+  # --------------------------------------------------
+  dailynotes:
+    image: m0ngr31/dailynotes
+    restart: unless-stopped
+    environment:
+      API_SECRET_KEY: ${DAILYNOTES_API_SECRET}
+      DB_ENCRYPTION_KEY: ${DAILYNOTES_ENCRYPT}
+    volumes:
+      - ${HDD}/files/docker/dailynotes/config:/app/config
+    ports:
+      - 52110:5000
