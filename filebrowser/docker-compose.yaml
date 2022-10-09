@@ -1,0 +1,17 @@
+## ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+version: "3"
+
+services:
+  filebrowser:
+    image: hurlenko/filebrowser
+    restart: unless-stopped
+    environment:
+      - FB_BASEURL=/
+    volumes:
+      - ${HDD}/files:/data
+      - ${HDD}/files/docker/filebrowser/config_dir:/config
+    ports:
+      - 50002:8080
+      
