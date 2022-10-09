@@ -1,0 +1,16 @@
+## ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+
+version: "3"
+services:
+  grafana:
+    image: grafana/grafana-oss:latest
+    user: "0:0"
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ${HDD}/files/docker/grafana/data:/var/lib/grafana
+    ports:
+      - 51300:3000
+        
