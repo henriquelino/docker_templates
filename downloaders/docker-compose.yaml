@@ -1,0 +1,76 @@
+## ENVS
+#TRANSMISSION_SKIN=/flood-for-transmission/
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+#TZ=America/Sao_Paulo 
+#TZ options -> https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+version: "3"
+services:
+  transmission: # torrent client
+    image: lscr.io/linuxserver/transmission:latest
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - TRANSMISSION_WEB_HOME=${TRANSMISSION_SKIN} # optional
+    volumes:
+      - ${HDD}/files/docker/transmission/data:/config
+      - ${HDD}/files/docker/transmission/downloads:/downloads
+      - ${HDD}/files/docker/transmission/watch:/watch
+    ports:
+      - 51200:9091 # webui
+      - 51299:51413 # torrent tcp
+      - 51299:51413/udp # torrent udp
+
+  # --------------------------------------------------
+  requestrr:
+    # https://github.com/darkalfx/requestrr/
+    # Requestrr is a chatbot used to simplify using services like Sonarr/Radarr/Overseerr/Ombi via the use of chat!
+    image: darkalfx/requestrr:latest
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/requestrr:/root/config
+    ports:
+      - 51220:4545
+
+  # --------------------------------------------------
+  jackett: # indexer
+    image: linuxserver/jackett:latest
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - AUTO_UPDATE=true #optional
+      #- RUN_OPTS=<run options here> #optional
+    volumes:
+      - ${HDD}/files/docker/jackett/config:/config
+      - ${HDD}/files/docker/jackett/downloads:/downloads
+    ports:
+      - 51210:9117
+
+  # --------------------------------------------------
+  radarr: # track movies
+    image: linuxserver/radarr:latest
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=100
+      - TZ=${TZ}
+    volumes:
+      - ${HDD}/files/docker/radarr/config:/config
+      - ${HDD}/files/media/movies:/movies #optional
+      - ${HDD}/files/docker/transmission/downloads:/downloads #optional, transmission output folder
+    ports:
+      - 51230:7878
+      
+  # --------------------------------------------------
+  sonarr: # track tv shows
+    image: linuxserver/sonarr:latest
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${HDD}/files/docker/sonarr/config:/config
+      - ${HDD}/files/media:/tv #optional
+      - ${HDD}/files/docker/transmission/downloads:/downloads #optional, transmission output folder
+    ports:
+      - 51240:8989
+      
