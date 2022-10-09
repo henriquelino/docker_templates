@@ -1,0 +1,19 @@
+## ENVS
+# HDD = /srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+# Change ports on server.properties to match ports here
+version: "3"
+services:
+  blynk:
+    image: hortio/blynk
+    command: ["-dataFolder", "/data", "-serverConfig", "/blynk/server.properties"]
+    restart: unless-stopped
+    volumes: 
+      - ${HDD}/files/docker/blynk/data:/data
+      - ${HDD}/files/docker/blynk/logs:/blynk/logs
+      - ${HDD}/files/docker/blynk/config/mail.properties:/blynk/mail.properties
+      - ${HDD}/files/docker/blynk/config/server.properties:/blynk/server.properties
+    ports:
+      - 51500:51500 # for devices
+      - 51501:51501 # web ui at /admin
+    
