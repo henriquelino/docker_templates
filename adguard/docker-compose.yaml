@@ -1,0 +1,22 @@
+## ENVS
+# HDD = /srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+## To stop default dns resolver that is running on port 53
+# sudo systemctl stop systemd-resolved
+# sudo systemctl disable systemd-resolved
+
+version: "3"
+services:
+
+  adguardhome:
+    image: adguard/adguardhome
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/adguard/workdir:/opt/adguardhome/work
+      - ${HDD}/files/docker/adguard/confdir:/opt/adguardhome/conf
+    ports:
+      - 53:53/tcp # NEED TO BE 53 IN ORDER TO RESOLVE DNS
+      - 53:53/udp
+      - 784:784/udp
+      - 853:853/tcp
+      - 3000:3000/tcp
+      - 52000:80/tcp # web ui
