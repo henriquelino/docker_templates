@@ -1,0 +1,77 @@
+##ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+#MYSQL_ROOT_PASSWORD=password
+#MYSQL_DB=nextcloud
+#MYSQL_USER=nextcloud
+#MYSQL_PASSWORD=password
+
+version: '3'
+
+volumes:
+  nextcloud:
+  db:
+
+networks:
+  nextcloud_network:
+    external: false
+    
+services:
+  db:
+    image: mariadb
+    restart: unless-stopped
+    #command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-file-per-table=1 --skip-innodb-read-only-compressed
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    networks:
+      - nextcloud_network
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_USER=${MYSQL_USER}
+    volumes:
+      - ${HDD}/files/docker/nextcloud/db2:/var/lib/mysql
+
+  # --------------------------------------------------
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    networks:
+      - nextcloud_network
+    volumes:
+      - ${HDD}/files/docker/nextcloud/redis:/data
+  # --------------------------------------------------
+  app:
+    image: nextcloud
+    restart: unless-stopped
+    links:
+      - db
+    depends_on:
+      - db
+      - redis
+    networks:
+      - nextcloud_network
+    volumes:
+      - ${HDD}/files/docker/nextcloud/data:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+    ports:
+      - 51900:80
+
+  # --------------------------------------------------
+  cron:
+    image: rcdailey/nextcloud-cronjob
+    restart: unless-stopped
+    network_mode: none
+    depends_on:
+      - app
+    environment:
+      - NEXTCLOUD_CONTAINER_NAME=app
+      - NEXTCLOUD_PROJECT_NAME=nextcloud
+      - NEXTCLOUD_CRON_MINUTE_INTERVAL=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
