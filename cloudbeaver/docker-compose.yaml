@@ -1,0 +1,13 @@
+## ENVS
+# HDD = /srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+version: "3"
+services:
+  cloudbeaver:
+      image: dbeaver/cloudbeaver:latest
+      restart: unless-stopped
+      volumes: 
+       - ${HDD}/files/docker/cloudbeaver/workspace:/opt/cloudbeaver/workspace
+      ports:
+       - 51400:8978
+       
