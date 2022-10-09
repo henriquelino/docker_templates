@@ -1,0 +1,56 @@
+## ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+#CALIBRE_MODS=linuxserver/mods:universal-calibre
+#TZ=America/Sao_Paulo 
+#TZ options -> https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+version: "3"
+services:
+  jellyfin: # stream movies, shows, musics...
+    image: jellyfin/jellyfin:latest
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/jellyfin/config:/config
+      - ${HDD}/files/docker/jellyfin/cache:/cache
+      - ${HDD}/files/media/:/media
+    #network_mode: host
+    ports:
+      - 51800:8096 # web ui HTTP
+      - 51801:8920 # web ui HTTPS
+      - 1900:1900/udp # Service Discovery, used for service auto-discovery, DLNA also uses this port and is required to be in the local subnet.
+      - 7359:7359/udp # Client Discovery, Allows clients to discover Jellyfin on the local network
+  # --------------------------------------------------
+  mango: # hq and manga reader
+    image: hkalexling/mango:latest
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/media/manga:/root/mango
+      - ${HDD}/files/docker/mango/config:/root/.config/mango
+    ports:
+      - 51810:9000
+  # --------------------------------------------------
+  calibre: # books
+    image: linuxserver/calibre
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PASSWORD= #optional
+      - CLI_ARGS= #optional
+    volumes:
+      - ${HDD}/files/docker/calibre/config:/config
+    ports:
+      - 51820:8080
+      - 51821:8081
+  # --------------------------------------------------
+  calibre-web: # books
+    image: linuxserver/calibre-web
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - DOCKER_MODS=${CALIBRE_MODS} #optional & x86-64 only Adds the ability to perform ebook conversion
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #Optionally set this to allow Google OAUTH to work
+    volumes:
+      - ${HDD}/files/docker/calibre-web/config:/config
+      - ${HDD}/files/docker/calibre/config/Calibre Library:/books
+    ports:
+      - 51830:8083
