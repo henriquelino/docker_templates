@@ -1,0 +1,64 @@
+##ENVS
+#HDD=/srv/dev-disk-by-uuid-9eac84de-1aa4-4126-9a57-ce91d0b60482
+
+
+version: "3"
+
+networks:
+    tick:
+
+services:
+  telegraf:
+    image: telegraf:latest
+    restart: unless-stopped
+    volumes:
+      - ${HDD}/files/docker/telegraf/config/:/etc/telegraf
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - influxdb
+    networks:
+        - tick
+        
+  # --------------------------------------------------
+  influxdb:
+    image: influxdb:1.8
+    restart: unless-stopped
+    hostname: "influxdb"
+    ports: 
+        - 52200:8086
+    volumes:
+      - ${HDD}/files/docker/influxdb/config:/etc/influxdb
+      - ${HDD}/files/docker/influxdb/data:/var/lib/influxdb
+    networks:
+        - tick
+      
+  # --------------------------------------------------
+  chronograf:
+    image: chronograf:latest
+    restart: unless-stopped
+    ports: 
+        - 52210:8888
+    volumes:
+      - ${HDD}/files/docker/chronograf/data:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    networks:
+        - tick
+
+  # --------------------------------------------------
+  kapacitor:
+    image: kapacitor:latest
+    restart: unless-stopped
+    hostname: "kapacitor"
+    ports:
+        - 52230:9092
+    environment: 
+        - KAPACITOR_INFLUXDB_0_URLS_0=http://influxdb:8086
+    volumes:
+      #- ${HDD}/files/docker/kapacitor/config/kapacitor.conf:/etc/kapacitor/kapacitor.conf:ro
+      - ${HDD}/files/docker/kapacitor/data:/var/lib/kapacitor:rw
+    depends_on:
+      - influxdb
+    networks:
+        - tick
+        
